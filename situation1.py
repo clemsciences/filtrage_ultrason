@@ -29,8 +29,66 @@ def simuler2(x_reel, y_reel, var):
     res.append(equation2_2_3(m2, m3))
     res.append(equation1_3_1(m3, m1))
     res.append(equation2_3_1(m3, m1))
-    return [(conv[0]+ np.random.randn()*var, conv[1] + np.random.randn()*var) for conv in res]
+    return [(conv[0]+ dot(np.random.randn()),var, conv[1] + numpy.dot(numpy.random.randn(),var)) for conv in res]
     
+class UnscentedKalman:
+    """
+       Cette classe implémente l'algorithme du Filitrage de Kalman Unscented
+    Source : Machine Learning a probabilistic perspective p. 651-652
+    """
+    def __init__(self, g, h, mu0, SIGMA0, d, alpha, beta, kappa, Q, R):
+        """
+        g est la fonction qui associe la position en t à la position en t+1
+        h est la fonction qui associe la position réelle aux mesures correspondantes
+        mu0 est la position initiale du robot
+        SIGMA est la matrice de covariance initiale
+        
+        """
+        self.d = d
+        self.alpha = float(alpha)
+        self.beta = float(beta)
+        self.kappa = kappa
+        self.mu = mu0
+        self.SIGMA = SIGMA0
+        self.lam = alpha**2*(d+kappa) - d
+        self.gamma = math.sqrt(d+self.lam)
+
+        self.Q = Q
+        self.R = R
+    def premier_pas(self):
+        racine_sigma = scipy.linalg.sqrtm(self.SIGMA)
+        self.points_sigma = array([self.mu]+[self.mu - gamma*racine_sigma[:,i] for i in range(0,self.d)]+[self.mu + gamma * racine_sigma[:,i] for i in range(0,d)])
+        self.z_etoile_barre = array([g(self.points_sigma[i]) for i in range(0,2*self.d)])
+        wm0 = self.lam /(self.d*self.lam)
+        wm = 1/(2.*(self.d+self.lam)
+        self.mu_barre = array([wm0*self.points_sigma[:,0]]+[wm*self.points_sigma[:,i] for i in range(1,2*self.d)])
+        wc0 = wm0+(1-self.alpha**2+self.beta)
+        self.SIGMA_barre = wc0*dot( (self.z_etoile_barre[0] - self.mu_barre),(self.z_etoile_barre[0] - self.mu_barre).T
+        for i in range(1,2*self.d):
+            self.SIGMA_barre += wm*dot((self.z_etoile_barre[i] - self.mu_barre),(self.z_etoile_barre[i] - self.mu_barre).T
+        self.SIGMA_barre += self.Q
+    def second_pas(self, y):
+        """
+        y est la mesure à l'instant t
+        """
+        racine_sigma = scipy.linalg.sqrtm(self.SIGMA_barre)
+        self.points_sigma_barre = array([self.mu_barre]+[self.mu - gamma*racine_sigma[:,i] for i in range(0,self.d)]+[self.mu_barre + gamma * racine_sigma[:,i] for i in range(0,d)])
+        self.y_etoile_barre = array([h(self.points_sigma_barre[i]) for i in range(0,2*self.d)])
+        wm0 = self.lam /(self.d*self.lam)
+        wm = 1/(2.*(self.d+self.lam)
+        self.y_chapeau = array([wm0*self.points_sigma_barre[:,0]]+[wm*self.points_sigma_barre[:,i] for i in range(1,2*self.d)])
+        wc0 = wm0+(1-self.alpha**2+self.beta)
+         self.S = wc0*dot((self.y_etoile_barre[0] - self.y_chapeau),(self.y_etoile_barre[0] - self.y_chapeau).T)
+        for i in range(1,2*self.d):
+            self.S += wm*dot((self.y_etoile_barre[i] - self.y_chapeau),(self.y_etoile_barre[i] - self.y_chapeau).T)
+        self.S += self.R
+
+        self.SIGMA_z_y_barre = wc0*dot((self.z_etoile_barre[0] - self.mu_barre),(self.y_etoile_barre[0] - self.y_chapeau).T)
+        for i in range(1, 2*self.D):
+            self.SIGMA_z_y_barre += wm*dot((self.z_etoile_barre[i] - self.mu_barre),(self.y_etoile_barre[i] - self.y_chapeau).T)
+        self.K = dot(self.SIGMA_z_y_barre, linalg.inv(self.S))
+        self.mu = self.mu_barre + dot(self.K, (y - self.y_chapeau))
+        self.SIGMA = self.SIGMA_barre - dot(dot(self.K,self.S),T)
 
 
 class Kalman:
@@ -61,15 +119,13 @@ class Kalman:
     measurement(Z)
 
 
-class ExtendedKalman:
-    
-
 class FiltrageLaser:
     
-    def __init__(self, config):
+    def __init__(self, config, x0):
         self.config = config
         self.dt = 0.2
-        x = numpy.array([1400,100,0.,0.])[:, numpy.newaxis] # vecteur d'état au départ
+        x = numpy.array(x).T
+        #x = numpy.array([1400,100,0.,0.])[:, numpy.newaxis] # vecteur d'état au départ
         P = numpy.matrix([[30.,0.,0.,0.],[0.,30.,0.,0.],[0.,0.,10.,0.],[0.,0.,0.,10.]]) # incertitude initiale
         F = numpy.matrix([[1.,0.,self.dt,0.],[0.,1.,0.,self.dt],[0.,0.,1.,0.],[0.,0.,0.,1.]]) # matrice de transition
         H = numpy.matrix([[1.,0.,0.,0.],[0.,1.,0.,0.]])# matrice d'observation
