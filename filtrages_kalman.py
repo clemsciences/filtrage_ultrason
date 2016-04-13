@@ -581,6 +581,7 @@ def script_unscented_with_real_measures():
     Script utilisant le filtre de Kalman unscented avec des mesures réelles !
     :return:
     """
+    print "script_unscented_with_real_measures"
     measures_pos = np.genfromtxt("mesures_25.txt", delimiter="\t")
     real_path = []
     for i in range(1, measures_pos.shape[0]):
@@ -611,7 +612,7 @@ def script_classic_trajectory_with_real_measures():
     Script utilisant le filtre de Kalman  avec des mesures réelles !
     :return:
     """
-    print 
+    print "script_classic_trajectory_with_real_measures"
     dt=0.025
     measures_pos = np.genfromtxt("mesures_25.txt", delimiter="\t")
     real_path = []
@@ -643,6 +644,7 @@ def script_classic_trajectory():
     Script utilisant le filtre de Kalman  avec des mesures simulées à partir d'une trajectoire inventée !
     :return:
     """
+    print "script_classic_trajectory"
     l_points = [[-1000., 200.], [-1000., 800.], [-400., 1200.], [500., 500.], [1100., 180.]]
     dt = 0.025
     real_path = generateur_chemin.generate_path(l_points=l_points, velocity_translation=25,
@@ -676,6 +678,7 @@ def script_unscented_trajectory():
     Script utilisant le filtre de Kalman unscented avec des mesures simulées à partir d'une trajectoire inventée !
     :return:
     """
+    print "script_unscented_trajectory"
     l_points = [[-1000., 200.], [-1000., 800.], [-400., 1200.], [500., 500.], [1100., 180.]]
     dt = 0.025
     real_path = generateur_chemin.generate_path(l_points=l_points, velocity_translation=25,
@@ -704,6 +707,7 @@ def script_unscented_trajectory():
 
 
 def script_unscented_with_fake_ultrasound_measures():
+    print "script_unscented_with_fake_ultrasound_measures"
     dt = 0.025
     measures_pos = np.genfromtxt("mesures_25.txt", delimiter="\t")
     real_path = []
