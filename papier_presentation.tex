@@ -1,0 +1,166 @@
+\documentclass[a4paper, 8pt]{article}
+
+\usepackage{tikz}
+\usepackage[T1]{fontenc}     
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}   
+\usepackage{amsmath}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[]{algorithm2e}
+\usepackage{geometry}
+\geometry{hmargin=2cm,vmargin=2cm}
+
+
+
+\title{Repérage d'un système à ultrason et filtrage}
+\author{Clément Besnier}
+%\setlength{\textwidth}{500pt}
+%\date{}
+\begin{document}
+
+\maketitle
+\section{Introduction}
+
+Chaque année a lieu la coupe de France de robotique. Durant cette compétition, deux robots évoluent sur une table de deux mètres sur trois en 90 secondes pour obtenir un maximum de points. La table étant partagée en même temps par deux robots, il est nécessaire d'éviter le robot adverse pour des raisons de sécurité et pour des raisons stratégiques. C'est la raison même d'un tel système de balisage.
+
+\input{schema_table.tex}
+
+\section{Système de balisage}
+
+Le système de balisage est composé d'une partie émettrice et d'une partie réceptrice. La partie émettrice (PE) est placée sur le robot adverse et émet des ultrasons. La partie réceptrice (PR) est composée de trois balises qui se trouvent autour de la table (Voir figure 1). Les trois balises sont synchronisées entre elles mais ne le sont pas avec la partie émettrice. 
+
+\section{Repérage}
+
+PE émet à intervalle régulier un signal particulier. Soient $ t_{1}, t_{2}, t_{3}$  respectivement les dates de réception du même signal par PR. Comme PE et PR ne sont pas synchronisées il est impossible de calculer la durée entre l'émission du signal et sa réception et donc on ne peut pas trianguler le signal pour en retrouver l'origine. Cependant, on est certain des trois valeurs suivantes : 
+
+
+\begin{equation}\label{1}
+		\begin{split}
+		& t_{1} - t_{2}\\
+		& t_{1} - t_{3}\\
+		& t_{2} - t_{3}
+		\end{split}
+\end{equation}
+
+, ce qui est proportionnel à
+\begin{equation}\label{2}
+		\begin{split}
+		& m_{1} = d((x,y),PR1)-d((x,y),PR2)\\
+		& m_{2} = d((x,y),PR1)-d((x,y),PR3)\\
+		& m_{3} = d((x,y),PR2)-d((x,y),PR3)
+		\end{split}
+\end{equation}
+
+, il faut juste multiplier les différences de dates par la vitesse du son dans l'air dans des conditions normales. Les mesures $m_{1}, m_{2},  m_{3}$ permettent de retrouver (x,y) en résolvant le système. Vous pouvez trouver en annexe les équations (pas belles) 
+
+
+\section{Modélisation et Simulation}
+
+Avant de pouvoir faire des mesures sur le robot, on simule les mesures en ajoutant un bruit gaussien aux $ m_{1}, m_{2},  m_{3}$.
+
+\section{Filtrage}
+
+Pour chaque modèle, on essayera un filtre de Kalman classique et un filtre  de Kalman unscented. Le filtre de Kalman étendu n'est pas adapté à la situation puisque la relation entre les mesures et l'état du robot (la position et la vitesse du robot) est non continue (et donc non dérivable) sur certaines parties de la table. JUSTIFIER ICI.
+
+Algorithme de Kalman
+\begin{algorithm}[H]
+		
+		\KwData{$tag(w_{i}) = t_{i}$ et $tag(w_{i+1}) = t_{i+1} C(t_{i},t_{i+1}) = \{(w_i,w_{i+1})| T(w_i) = t_i~et~T(w_{i+1}) = t_{i+1} \}, w_{1:N}$}
+		\KwResult{$q_{i}(w_{i},w_{i+1}) i \in \{1 .. N-1\}$}
+		\eIf{$(w_{i},w_{i+1}) \in C(t_{i},t_{i+1}) $}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i},w_{i+1})$\;}{
+		\eIf{$w_{i} \in C(t_{i},t_{i+1})$ et $w_{i+1} \in C(t_{i},t_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i}) * p(t_{i},t_{i+1},w_{i+1})$}{
+		\eIf{$w_{i} \in C(t_{i},t_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i})$}{
+		\eIf{$w_{i+1} \in C(t_{i},t_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1})$}}}}
+	\caption{Détermination de $q_i$ pour $i \in \{1..N-1\}$}
+	\end{algorithm}
+	
+Algorithme de Kalman Unscented
+\begin{algorithm}[H]
+		
+		\KwData{$tag(w_{i}) = t_{i}$ et $tag(w_{i+1}) = t_{i+1} C(t_{i},t_{i+1}) = \{(w_i,w_{i+1})| T(w_i) = t_i~et~T(w_{i+1}) = t_{i+1} \}, w_{1:N}$}
+		\KwResult{$q_{i}(w_{i},w_{i+1}) i \in \{1 .. N-1\}$}
+		\eIf{$(w_{i},w_{i+1}) \in C(t_{i},t_{i+1}) $}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i},w_{i+1})$\;}{
+		\eIf{$w_{i} \in C(t_{i},t_{i+1})$ et $w_{i+1} \in C(t_{i},t_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i}) * p(t_{i},t_{i+1},w_{i+1})$}{
+		\eIf{$w_{i} \in C(t_{i},t_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i})$}{
+		\eIf{$w_{i+1} \in C(t_{i},t_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1},w_{i+1})$}{$q_{i}(w_{i},w_{i+1}) = p(t_{i},t_{i+1})$}}}}
+	\caption{Détermination de $q_i$ pour $i \in \{1..N-1\}$}
+	\end{algorithm}
+
+
+
+
+\section{Annexe I : mesure vers état}
+
+Les trois équations du système représentent trois équations d'hyperbole. (x,y) se retrouvent à l'intersection de trois branches d'hyperbole. Cependant,la formule donnée à Mathematica (CHANGER LA FORMULATION) donne, pour chaque couple possible d'équation, deux solutions. Au total il y a 6 solutions.
+
+\begin{itemize}[label=$\bullet$]
+		
+\item équation 1 1 2
+{\tiny
+\begin{equation} \label{3}
+	\begin{split}
+	a & = \sqrt{-(-10+{{m}_{1}}^{2})*{({m}_{1}+{m}_{2})}^{2}*(-10+{{m}_{2}}^{2})*(-4+{{m}_{1}}^{2}-2*{{m}_{1}}^{2}+{{m}_{2}}^{2})}\\
+	x & = \frac{-(-12+6*{{m}_{1}}^{2}-12*{m}_{1}*{m}_{2}+3*{{m}_{1}}^{3}*{m}_{2}+6*{{m}_{2}}^{2}-6*{{m}_{1}}^{2}*{{m}_{2}}^{2}+3*{m}_{1}*{{m}_{2}}^{3}+a)}{4*(-18+5*{{m}_{1}}^{2}-8*{m}_{1}*{m}_{2}+5*{{m}_{2}}^{2})} \\
+	Q & = 4*({m}_{1}+{m}_{2})*(-18+5*{{m}_{1}}^{2}-8*{m}_{1}*{m}_{2}+5*{{m}_{2}}^{2})\\
+	y & =  \frac{-1}{Q*(72*{m}_{1}-28*{{m}_{1}}^{3}+72*{m}_{2}+4*{{m}_{1}}^{2}*{m}_{2}+{{m}_{1}}^{4}*{m}_{2}+20*{m}_{1}*{{m}_{2}}^{2}+{{m}_{1}}^{3}*{{m}_{2}}^{2}-12*{{m}_{2}}^{3}-{{m}_{1}}^{2}*{{m}_{2}}^{3}-{m}_{1}*{{m}_{2}}^{4}-3*{m}_{1}*a+3*{m}_{2}*a)} 
+	\end{split}
+	\end{equation}
+}
+\item équation 2 1 2
+{\tiny
+   \begin{equation} \label{4}
+   	\begin{split}
+    a & = \sqrt{-(-10+{{m}_{1}}^{2})*{({m}_{1}+{m}_{2})}^{2}*(-10+{{m}_{2}}^{2})*(-4+{{m}_{1}}^{2}-2*{m}_{1}*{m}_{2}+{{m}_{2}}^{2})}\\
+   	x & = \frac{-(-12+6*{{m}_{1}}^{2}-12*{m}_{1}*{m}_{2}+3*{{m}_{1}}^{3}*{m}_{2}+6*{{m}_{2}}^{2}-6*{{m}_{1}}^{2}*{{m}_{2}}^{2}+3*{m}_{1}*{{m}_{2}}^{3}-a)}{4*(-18+5*{{m}_{1}}^{2}-8*{m}_{1}*{m}_{2}+5*{{m}_{2}}^{2})} \\
+   	Q & = 4*({m}_{1}+{m}_{2})*(-18+5* {{m}_{1}}^{2}-8*{m}_{1}*{m}_{2}+5*{{m}_{2}}^{2})\\
+   	 y &  = \frac{-1}{Q*(72*{m}_{1}-28*{{m}_{1}}^{3}+72*{m}_{2}+4*{{m}_{1}}^{2}*{m}_{2}+{{m}_{1}}^{4}*{m}_{2}+20*{m}_{1}*{{m}_{2}}^{2}+{{m}_{1}}^{3}*{{m}_{2}}^{2}-12*{{m}_{2}}^{3}-{{m}_{1}}^{2}* {{m}_{2}}^{3}-{m}_{1}*{{m}_{2}}^{4}+3*{m}_{1}*a-3*{m}_{2}*a)} 
+   	\end{split}
+   	\end{equation}
+}
+\item équation 1 2 3
+{\tiny
+ \begin{equation} \label{5}
+   	\begin{split}
+   a & = \sqrt{-(-10+{{m}_{2}}^{2})*{(-2*{m}_{2}+{m}_{3})}^{2}*(-4+{{m}_{3}}^{2})*(-10+{{m}_{2}}^{2}-2*{m}_{2}*{m}_{3}+{{m}_{3}}^{2})}\\
+   x  & =  \frac{-(-12+6*{{m}_{3}}^{2}+3*{{m}_{2}}^{2}*{{m}_{3}}^{2}-3*{m}_{2}*{{m}_{3}}^{3}-a)}{4*(-18+2*{{m}_{2}}^{2}-2*{m}_{2}*{m}_{3}+5*{{m}_{3}}^{2})} \\
+   	 y &  = \frac{-144*{m}_{2}+16*{{m}_{2}}^{3}+72*{m}_{3}-56*{{m}_{2}}^{2}*{m}_{3}+4*{{m}_{2}}^{4}*{m}_{3}+80*{m}_{2}*{{m}_{3}}^{2}-8*{{m}_{2}}^{3}*{{m}_{3}}^{2}-28*{{m}_{3}}^{3}+5*{{m}_{2}}^{2}*{{m}_{3}}^{3}-{m}_{2}*{{m}_{3}}^{4}+3*{m}_{3}*a}{4*(2*{m}_{2}-{m}_{3})*(-18+2*{{m}_{2}}^{2}-2*{m}_{2}*{m}_{3}+5*{{m}_{3}}^{2})}
+   	\end{split}
+ \end{equation}
+}
+\item équation 2 2 3
+{\tiny
+\begin{equation} \label{6}
+   	\begin{split}
+   [a & = \sqrt-(-10+{{m}_{2}}^{2})*{(-2*{m}_{2}+{m}_{3})}^{2}*(-4+{{m}_{3}}^{2})*(-10+{{m}_{2}}^{2}-2*{m}_{2}*{m}_{3}+{{m}_{3}}^{2})\\
+  x & = \frac{-(-12+6*{{m}_{3}}^{2}+3*{{m}_{2}}^{2}*{{m}_{3}}^{2}-3*{m}_{2}*{{m}_{3}}^{3}+a)}{4*(-18+2*{{m}_{2}}^{2} -2*{m}_{2}*{m}_{3}+5*{{m}_{3}}^{2})} \\
+   	 y & = \frac{-144*{m}_{2}+16*{{m}_{2}}^{3}+72*{m}_{3}-56*{{m}_{2}}^{2}*{m}_{3}+4*{{m}_{2}}^{4}*{m}_{3}+80*{m}_{2}*{{m}_{3}}^{2}-8*{{m}_{2}}^{3}*{{m}_{3}}^{2}-28*{{m}_{3}}^{3}+5*{{m}_{2}}^{2}*{{m}_{3}}^{3}-{m}_{2}*{{m}_{3}}^{4}-3*{m}_{3}*a}{4*(2*{m}_{2}-{m}_{3})*(-18+2*{{m}_{2}}^{2}-2*{m}_{2}*{m}_{3}+5*{{m}_{3}}^{2})}
+   	\end{split}
+\end{equation}
+}
+
+\item équation 1 3 1
+{\tiny
+\begin{equation} \label{7}
+   	\begin{split}
+  a & = \sqrt{(-(-10+{{m}_{1}}^{2})*{(2*{m}_{1}+{m}_{3})}^{2}*(-4+{{m}_{3}}^{2})*(-10+{{m}_{1}}^{2}+2*{m}_{1}*{m}_{3}+{{m}_{3}}^{2}))}\\
+  x & = \frac{-(-12+6*{{m}_{3}}^{2}+3*{{m}_{1}}^{2}*{{m}_{3}}^{2}+3*{m}_{1}*{{m}_{3}}^{3}+a)}{4*(-18+2* {{m}_{1}}^{2}+2*{m}_{1}*{m}_{3}+5*{{m}_{3}}^{2})} \\
+   	 y & = \frac{-144*{m}_{1}+16*{{m}_{1}}^{3}-72*{m}_{3}-8*{{m}_{1}}^{2}*{m}_{3}+4*{{m}_{1}}^{4}*{m}_{3}+16*{m}_{1}*{{m}_{3}}^{2}+8*{{m}_{1}}^{3}*{{m}_{3}}^{2}+12*{{m}_{3}}^{3}+5*{{m}_{1}}^{2}*{{m}_{3}}^{3}+{m}_{1}*{{m}_{3}}^{4}-3*{m}_{3}*a}{4*(2*{m}_{1}+{m}_{3})*(-18+2*{{m}_{1}}^{2}+2*{m}_{1}*{m}_{3}+5*{{m}_{3}}^{2})}
+   	\end{split}
+\end{equation}
+}
+\item équation 2 3 1
+{\tiny
+\begin{equation} \label{8}
+   	\begin{split}
+	  a & = \sqrt{-(-10+{{m}_{1}}^{2})*{(2*{m}_{1}+{m}_{3})}^{2}*(-4+{{m}_{3}}^{2})*(-10+{{m}_{1}}^{2}+2*{m}_{1}*{m}_{3}+{{m}_{3}}^{2})}\\
+	  x & = \frac{-(-12+6*{{m}_{3}}^{2}+3*{{m}_{1}}^{2}*{{m}_{3}}^{2}+3*{m}_{1}*{{m}_{3}}^{3}-a)}{4*(-18+2*{{m}_{1}}^{2}+2*{m}_{1}*{m}_{3}+5*{{m}_{3}}^{2})} \\
+   		 y & = \frac{-144*{m}_{1}+16*{{m}_{1}}^{3}-72*{m}_{3}-8*{{m}_{1}}^{2}*{m}_{3}+4*{{m}_{1}}^{4}*{m}_{3}+16*{m}_{1}*{{m}_{3}}^{2}+8*{{m}_{1}}^{3}*{{m}_{3}}^{2}+12*{{m}_{3}}^{3}+5*{{m}_{1}}^{2}*{{m}_{3}}^{3}+{m}_{1}*{{m}_{3}}^{4}+3*{m}_{3}*a}{4*(2*{m}_{1}+{m}_{3})*(-18+2*{{m}_{1}}^{2}+2*{m}_{1}*{m}_{3}+5*{{m}_{3}}^{2})}
+   	\end{split}
+\end{equation}
+}
+\end{itemize}
+
+\end{document}
+

@@ -1,0 +1,30 @@
+
+
+ \begin{tikzpicture}[scale=1]
+ 	 %code !
+ 	 %Pour définir un style 
+ 	 \tikzset{axis/.style={->,>=latex}}
+ 	 %Pour dessiner les axes
+ 	 \draw[axis] (-3.1, 0) -- (3.5, 0);	 	 
+ 	 \draw[axis] (0, -0.5) -- (0, 4.5);
+ 	 
+ 	 %Pour annoter les axes
+
+ 	 \draw (3.5,0) node[above]{x};
+ 	 \draw (0,4.5) node[right]{y};
+
+ 	 %graduations
+ 	 \draw (-3,2pt) -- (-3,-2pt) node[below]{-1500};
+ 	 \draw (3,2pt) -- (3,-2pt) node[below]{1500};
+ 	 \draw (0,3.5) -- (0,3.5) node[right] {2000};
+ 	 \coordinate(A) at (-2.2,2.8);
+ 	 \filldraw[red] (A) circle (2pt) node[right] {(x,y)};
+  %finir la table  
+   \draw (-3,0) -- (-3,4);
+   \draw (-3,4) -- (3, 4);
+   \draw (3,4) -- (3, 0);
+   %ajout des balises
+ 	 \filldraw[blue] (-3,0) circle (1pt) node[left] {1};
+   \filldraw[blue] (3,2) circle (1pt) node[right] {2};
+   \filldraw[blue] (-3,4) circle (1pt) node[left] {3};
+ \end{tikzpicture}
