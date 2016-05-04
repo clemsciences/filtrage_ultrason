@@ -15,6 +15,7 @@ class Converter:
     """
     l = 2  # largeur de la table
     L = 3  # longueur de la table
+
     def __init__(self, pos1=None, pos2=None, pos3=None):
         self.set_beacon_positions(pos1, pos2, pos3)
 
@@ -48,11 +49,11 @@ class Converter:
             self.beacon3 = STANDARD_POSITION3
         else:
             if isinstance(pos1, Point):
-                self.beacon1 = pos3
+                self.beacon3 = pos3
             elif type(pos1) == list:
-                self.beacon1 = Point(pos3[0], pos3[1])
+                self.beacon3 = Point(pos3[0], pos3[1])
             else:
-                self.beacon1 = STANDARD_POSITION3
+                self.beacon3 = STANDARD_POSITION3
 
     def test(self, mesures):
         print "OOOOOOOOOOOOOOOOOOOOOOOO"
