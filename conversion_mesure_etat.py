@@ -5,7 +5,6 @@ from structures import Point, Velocity
 __author__ = "spraakforskaren"
 
 
-
 class Converter:
     """
     Les équations ont été résolues pour les positions suivantes
